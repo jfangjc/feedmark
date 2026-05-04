@@ -4,38 +4,38 @@ import type { RssFeed, RssFeedItem } from "../../features/rss/types";
 import type { FeedSubscription } from "../../features/subscriptions/types";
 import { RssItemCard } from "../RssItemCard/RssItemCard";
 import { SubscriptionCard } from "../SubscriptionCard/SubscriptionCard";
-import { styles } from "./HomeFeedList.styles";
+import { styles } from "./FeedList.styles";
 
-export type HomeFeedEntry =
+export type FeedEntry =
     | {
-          id: string;
-          type: "rssItem";
-          sourceId: string;
-          sourceTitle: string;
-          item: RssFeedItem;
-      }
+        id: string;
+        type: "rssItem";
+        sourceId: string;
+        sourceTitle: string;
+        item: RssFeedItem;
+    }
     | {
-          id: string;
-          type: "subscription";
-          subscription: FeedSubscription;
-      };
+        id: string;
+        type: "subscription";
+        subscription: FeedSubscription;
+    };
 
-type HomeFeedListProps = {
+type FeedListProps = {
     feeds: RssFeed[];
     subscriptions: FeedSubscription[];
     header?: ReactElement;
     empty?: ReactElement;
-    onEntryPress?: (entry: HomeFeedEntry) => void;
+    onEntryPress?: (entry: FeedEntry) => void;
 };
 
-export function HomeFeedList({ feeds, subscriptions, header, empty, onEntryPress }: HomeFeedListProps) {
+export function FeedList({ feeds, subscriptions, header, empty, onEntryPress }: FeedListProps) {
     const entries = createEntries(feeds, subscriptions);
 
     return (
         <FlatList
             data={entries}
             keyExtractor={(entry) => entry.id}
-            renderItem={(info) => <HomeFeedCard info={info} onEntryPress={onEntryPress} />}
+            renderItem={(info) => <FeedCard info={info} onEntryPress={onEntryPress} />}
             ListHeaderComponent={header ?? null}
             ListEmptyComponent={empty ?? null}
             contentContainerStyle={[styles.content, entries.length === 0 ? styles.emptyContent : null]}
@@ -44,12 +44,12 @@ export function HomeFeedList({ feeds, subscriptions, header, empty, onEntryPress
     );
 }
 
-function HomeFeedCard({
+function FeedCard({
     info,
     onEntryPress,
 }: {
-    info: ListRenderItemInfo<HomeFeedEntry>;
-    onEntryPress?: (entry: HomeFeedEntry) => void;
+    info: ListRenderItemInfo<FeedEntry>;
+    onEntryPress?: (entry: FeedEntry) => void;
 }) {
     if (info.item.type === "subscription") {
         return (
@@ -69,7 +69,7 @@ function HomeFeedCard({
     );
 }
 
-function createEntries(feeds: RssFeed[], subscriptions: FeedSubscription[]): HomeFeedEntry[] {
+function createEntries(feeds: RssFeed[], subscriptions: FeedSubscription[]): FeedEntry[] {
     const rssEntries = feeds.flatMap((feed) =>
         feed.items.map((item) => ({
             id: `rss:${feed.id}:${item.id}`,
@@ -91,7 +91,7 @@ function createEntries(feeds: RssFeed[], subscriptions: FeedSubscription[]): Hom
     );
 }
 
-function getTime(entry: HomeFeedEntry): number {
+function getTime(entry: FeedEntry): number {
     const value = entry.type === "rssItem" ? entry.item.publishedAt : entry.subscription.updatedAt;
 
     if (!value) {

@@ -6,10 +6,8 @@ export const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: theme.colors.background,
     },
-    content: {
-        flex: 1,
-        paddingHorizontal: theme.spacing.xl,
-        paddingTop: theme.spacing.xxxl,
+    intro: {
+        marginBottom: theme.spacing.xl,
     },
     title: {
         color: theme.colors.text,

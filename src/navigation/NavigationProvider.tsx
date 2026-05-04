@@ -1,5 +1,5 @@
 import { createContext, useMemo, useState, type PropsWithChildren } from "react";
-import { homeRoute, type AppRoute } from "./routes";
+import { defaultRoute, type AppRoute } from "./routes";
 
 type NavigationContextValue = {
     route: AppRoute;
@@ -12,8 +12,8 @@ type NavigationContextValue = {
 export const NavigationContext = createContext<NavigationContextValue | null>(null);
 
 export function NavigationProvider({ children }: PropsWithChildren) {
-    const [stack, setStack] = useState<AppRoute[]>([homeRoute]);
-    const route = stack[stack.length - 1] ?? homeRoute;
+    const [stack, setStack] = useState<AppRoute[]>([defaultRoute]);
+    const route = stack[stack.length - 1] ?? defaultRoute;
 
     const value = useMemo<NavigationContextValue>(
         () => ({
@@ -27,7 +27,7 @@ export function NavigationProvider({ children }: PropsWithChildren) {
                     currentStack.length > 1 ? currentStack.slice(0, currentStack.length - 1) : currentStack,
                 );
             },
-            reset: (nextRoute = homeRoute) => {
+            reset: (nextRoute = defaultRoute) => {
                 setStack([nextRoute]);
             },
         }),

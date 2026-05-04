@@ -1,23 +1,13 @@
-export type FeedRouteParams = {
-    feedId?: string;
-    title?: string;
-};
-
-export type AppTabRouteName = "home" | "all" | "add" | "manage" | "setting";
+export type AppTabRouteName = "feed" | "all" | "manage" | "setting";
 
 export type AppTabRoute = {
     name: AppTabRouteName;
 };
 
-export type AppRoute =
-    | AppTabRoute
-    | {
-          name: "feed";
-          params: FeedRouteParams;
-      };
+export type AppRoute = AppTabRoute;
 
-export const homeRoute: AppTabRoute = {
-    name: "home",
+export const defaultRoute: AppTabRoute = {
+    name: "feed",
 };
 
 export const appTabs: Array<{
@@ -25,16 +15,12 @@ export const appTabs: Array<{
     label: string;
 }> = [
     {
-        name: "home",
-        label: "Home",
+        name: "feed",
+        label: "Feed",
     },
     {
         name: "all",
         label: "All",
-    },
-    {
-        name: "add",
-        label: "Add",
     },
     {
         name: "manage",
@@ -52,17 +38,6 @@ export function createTabRoute(name: AppTabRouteName): AppTabRoute {
     };
 }
 
-export function createFeedRoute(params: FeedRouteParams = {}): AppRoute {
-    return {
-        name: "feed",
-        params,
-    };
-}
-
 export function getActiveTabName(route: AppRoute): AppTabRouteName {
-    if (route.name === "feed") {
-        return "home";
-    }
-
     return route.name;
 }

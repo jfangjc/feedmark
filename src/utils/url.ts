@@ -27,7 +27,8 @@ export function isHttpUrl(input: string): boolean {
     try {
         normalizeFeedUrl(input);
         return true;
-    } catch {
+    }
+    catch {
         return false;
     }
 }
@@ -35,7 +36,8 @@ export function isHttpUrl(input: string): boolean {
 export function getHostnameLabel(input: string): string {
     try {
         return new URL(normalizeFeedUrl(input)).hostname.replace(/^www\./, "");
-    } catch {
+    }
+    catch {
         return input.trim();
     }
 }
