@@ -6,7 +6,9 @@
         "start": "expo start",
         "android": "expo start --android",
         "ios": "expo start --ios",
-        "web": "expo start --web"
+        "web": "expo start --web",
+        "lint": "eslint .",
+        "typecheck": "tsc --noEmit"
     },
     "dependencies": {
         "expo": "~54.0.33",
@@ -18,8 +20,11 @@
         "react-native-web": "^0.21.0"
     },
     "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.10.0",
         "@types/react": "~19.1.0",
-        "typescript": "~5.9.2"
+        "eslint": "^9.39.4",
+        "typescript": "~5.9.2",
+        "typescript-eslint": "^8.59.1"
     },
     "private": true,
     "license": "MIT"
