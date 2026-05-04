@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="assets/logo.png" alt="Feedmark logo" style="width:65%">
+    <img src="assets/icon.png" alt="Feedmark logo" style="width:65%">
     <br/>
     A minimalistic reader for following your favorite blogs, news, and websites.
     <br/>
