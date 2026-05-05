@@ -15,4 +15,10 @@ export const styles = StyleSheet.create({
         lineHeight: theme.lineHeights.xl,
         fontWeight: theme.fontWeights.bold,
     },
+    status: {
+        marginTop: theme.spacing.sm,
+        color: theme.colors.textMuted,
+        fontSize: theme.fontSizes.sm,
+        lineHeight: theme.lineHeights.sm,
+    },
 });

@@ -1,4 +1,4 @@
-import { FlatList, type ListRenderItemInfo } from "react-native";
+import { FlatList, RefreshControl, type ListRenderItemInfo } from "react-native";
 import type { ReactElement } from "react";
 import type { RssFeed, RssFeedItem } from "../../features/rss/types";
 import type { FeedSubscription } from "../../features/subscriptions/types";
@@ -25,10 +25,20 @@ type FeedListProps = {
     subscriptions: FeedSubscription[];
     header?: ReactElement;
     empty?: ReactElement;
+    refreshing?: boolean;
     onEntryPress?: (entry: FeedEntry) => void;
+    onRefresh?: () => void;
 };
 
-export function FeedList({ feeds, subscriptions, header, empty, onEntryPress }: FeedListProps) {
+export function FeedList({
+    feeds,
+    subscriptions,
+    header,
+    empty,
+    refreshing = false,
+    onEntryPress,
+    onRefresh,
+}: FeedListProps) {
     const entries = createEntries(feeds, subscriptions);
 
     return (
@@ -39,7 +49,10 @@ export function FeedList({ feeds, subscriptions, header, empty, onEntryPress }: 
             ListHeaderComponent={header ?? null}
             ListEmptyComponent={empty ?? null}
             contentContainerStyle={[styles.content, entries.length === 0 ? styles.emptyContent : null]}
-            alwaysBounceVertical={false}
+            refreshControl={
+                onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
+            }
+            alwaysBounceVertical={Boolean(onRefresh)}
         />
     );
 }

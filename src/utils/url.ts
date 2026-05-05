@@ -41,3 +41,18 @@ export function getHostnameLabel(input: string): string {
         return input.trim();
     }
 }
+
+export function resolveUrl(input: string | undefined, baseUrl: string): string | undefined {
+    const trimmedInput = input?.trim();
+
+    if (!trimmedInput) {
+        return undefined;
+    }
+
+    try {
+        return new URL(trimmedInput, baseUrl).toString();
+    }
+    catch {
+        return undefined;
+    }
+}

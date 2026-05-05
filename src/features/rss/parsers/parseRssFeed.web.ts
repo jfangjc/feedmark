@@ -1,6 +1,7 @@
 import { createStableId } from "../../../utils/id";
-import { normalizeFeedUrl } from "../../../utils/url";
+import { normalizeFeedUrl, resolveUrl } from "../../../utils/url";
 import type { RssFeed, RssFeedItem } from "../types";
+import { extractImageUrlFromHtml, normalizeHtmlSummary, normalizeText } from "./text";
 
 export function parseRssFeedXml(xml: string, feedUrlInput: string): RssFeed {
     if (typeof DOMParser === "undefined") {
@@ -31,8 +32,9 @@ export function parseRssFeedXml(xml: string, feedUrlInput: string): RssFeed {
 
 function parseRssChannel(channel: Element, feedUrl: string): RssFeed {
     const title = getText(channel, "title") ?? "Untitled RSS feed";
-    const siteUrl = getText(channel, "link");
-    const description = getText(channel, "description");
+    const siteUrl = resolveUrl(getText(channel, "link"), feedUrl);
+    const description = normalizeText(getText(channel, "description"));
+    const imageUrl = getRssFeedImageUrl(channel, feedUrl);
     const items = Array.from(channel.querySelectorAll("item")).map((item, index) => parseRssItem(item, feedUrl, index));
 
     return {
@@ -41,6 +43,7 @@ function parseRssChannel(channel: Element, feedUrl: string): RssFeed {
         feedUrl,
         siteUrl,
         description,
+        imageUrl,
         lastFetchedAt: new Date().toISOString(),
         items,
     };
@@ -48,8 +51,9 @@ function parseRssChannel(channel: Element, feedUrl: string): RssFeed {
 
 function parseAtomFeed(feed: Element, feedUrl: string): RssFeed {
     const title = getText(feed, "title") ?? "Untitled Atom feed";
-    const siteUrl = getAtomLink(feed);
-    const description = getText(feed, "subtitle");
+    const siteUrl = resolveUrl(getAtomLink(feed), feedUrl);
+    const description = normalizeText(getText(feed, "subtitle"));
+    const imageUrl = resolveUrl(getText(feed, "logo") ?? getText(feed, "icon"), feedUrl);
     const items = Array.from(feed.querySelectorAll("entry")).map((entry, index) =>
         parseAtomEntry(entry, feedUrl, index),
     );
@@ -60,6 +64,7 @@ function parseAtomFeed(feed: Element, feedUrl: string): RssFeed {
         feedUrl,
         siteUrl,
         description,
+        imageUrl,
         lastFetchedAt: new Date().toISOString(),
         items,
     };
@@ -67,9 +72,11 @@ function parseAtomFeed(feed: Element, feedUrl: string): RssFeed {
 
 function parseRssItem(item: Element, feedUrl: string, index: number): RssFeedItem {
     const title = getText(item, "title") ?? "Untitled item";
-    const link = getText(item, "link");
+    const link = resolveUrl(getText(item, "link"), feedUrl);
     const publishedAt = normalizeDate(getText(item, "pubDate"));
-    const summary = getText(item, "description");
+    const rawSummary = getText(item, "description") ?? getNamespacedText(item, "encoded");
+    const summary = normalizeHtmlSummary(rawSummary);
+    const imageUrl = getRssItemImageUrl(item, feedUrl, rawSummary);
     const author = getText(item, "author") ?? getNamespacedText(item, "creator");
     const stableSeed = `${feedUrl}:${link ?? title}:${publishedAt ?? index}`;
 
@@ -77,6 +84,7 @@ function parseRssItem(item: Element, feedUrl: string, index: number): RssFeedIte
         id: createStableId("rss_item", stableSeed),
         title,
         link,
+        imageUrl,
         summary,
         publishedAt,
         author,
@@ -85,9 +93,11 @@ function parseRssItem(item: Element, feedUrl: string, index: number): RssFeedIte
 
 function parseAtomEntry(entry: Element, feedUrl: string, index: number): RssFeedItem {
     const title = getText(entry, "title") ?? "Untitled item";
-    const link = getAtomLink(entry);
+    const link = resolveUrl(getAtomLink(entry), feedUrl);
     const publishedAt = normalizeDate(getText(entry, "published") ?? getText(entry, "updated"));
-    const summary = getText(entry, "summary") ?? getText(entry, "content");
+    const rawSummary = getText(entry, "summary") ?? getText(entry, "content");
+    const summary = normalizeHtmlSummary(rawSummary);
+    const imageUrl = getAtomItemImageUrl(entry, feedUrl, rawSummary);
     const author = getText(entry, "author > name");
     const stableSeed = `${feedUrl}:${link ?? title}:${publishedAt ?? index}`;
 
@@ -95,6 +105,7 @@ function parseAtomEntry(entry: Element, feedUrl: string, index: number): RssFeed
         id: createStableId("rss_item", stableSeed),
         title,
         link,
+        imageUrl,
         summary,
         publishedAt,
         author,
@@ -110,6 +121,79 @@ function getNamespacedText(parent: Element, localName: string): string | undefin
         Array.from(parent.children)
             .find((child) => child.localName === localName)
             ?.textContent?.trim() || undefined
+    );
+}
+
+function getRssFeedImageUrl(channel: Element, feedUrl: string): string | undefined {
+    const channelImage = Array.from(channel.children).find((child) => child.localName === "image");
+    const imageUrl = channelImage ? getText(channelImage, "url") : undefined;
+
+    return (
+        resolveUrl(imageUrl, feedUrl) ??
+        resolveUrl(getChildAttribute(channel, "logo", "href"), feedUrl) ??
+        resolveUrl(getChildAttribute(channel, "icon", "href"), feedUrl)
+    );
+}
+
+function getRssItemImageUrl(item: Element, feedUrl: string, rawSummary: string | undefined): string | undefined {
+    return (
+        resolveUrl(getImageEnclosureUrl(item), feedUrl) ??
+        resolveUrl(getMediaImageUrl(item), feedUrl) ??
+        resolveUrl(getChildAttribute(item, "image", "href"), feedUrl) ??
+        extractImageUrlFromHtml(rawSummary, feedUrl)
+    );
+}
+
+function getAtomItemImageUrl(entry: Element, feedUrl: string, rawSummary: string | undefined): string | undefined {
+    return (
+        resolveUrl(getAtomEnclosureImageUrl(entry), feedUrl) ??
+        resolveUrl(getMediaImageUrl(entry), feedUrl) ??
+        extractImageUrlFromHtml(rawSummary, feedUrl)
+    );
+}
+
+function getImageEnclosureUrl(parent: Element): string | undefined {
+    const enclosure = Array.from(parent.children).find((child) => {
+        const type = child.getAttribute("type") ?? "";
+
+        return child.localName === "enclosure" && type.toLowerCase().startsWith("image/");
+    });
+
+    return enclosure?.getAttribute("url") ?? undefined;
+}
+
+function getMediaImageUrl(parent: Element): string | undefined {
+    const mediaChild = Array.from(parent.children).find((child) => {
+        const medium = child.getAttribute("medium") ?? "";
+        const type = child.getAttribute("type") ?? "";
+
+        return (
+            (child.localName === "thumbnail" && child.getAttribute("url")) ||
+            (child.localName === "content" &&
+                child.getAttribute("url") &&
+                (medium.toLowerCase() === "image" || type.toLowerCase().startsWith("image/")))
+        );
+    });
+
+    return mediaChild?.getAttribute("url") ?? undefined;
+}
+
+function getAtomEnclosureImageUrl(parent: Element): string | undefined {
+    const link = Array.from(parent.querySelectorAll("link")).find((child) => {
+        const rel = child.getAttribute("rel") ?? "";
+        const type = child.getAttribute("type") ?? "";
+
+        return rel.toLowerCase() === "enclosure" && type.toLowerCase().startsWith("image/");
+    });
+
+    return link?.getAttribute("href") ?? undefined;
+}
+
+function getChildAttribute(parent: Element, localName: string, attributeName: string): string | undefined {
+    return (
+        Array.from(parent.children)
+            .find((child) => child.localName === localName)
+            ?.getAttribute(attributeName) ?? undefined
     );
 }
 
