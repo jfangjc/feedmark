@@ -1,14 +1,13 @@
 <p align="center">
-    <img src="assets/icon.png" alt="Feedmark logo" style="width:65%">
+    <img src="assets/icon.png" alt="Feedmark logo" style="width:25%">
     <br/>
-    A minimalistic reader for following your favorite blogs, news, and websites.
+    <h1 align="center">Feedmark</h3>
+    <p align="center">A minimalistic reader for following your favorite blogs, news, and websites.</p>
     <br/>
     <br/>
 </p>
 
----
-
-# Feedmark
+## Overview
 
 Feedmark is a minimalistic reader built with Expo, React Native, and TypeScript.
 
