@@ -18,6 +18,7 @@ type FeedListProps = {
     empty?: ReactElement;
     refreshing?: boolean;
     onEntryPress?: (entry: FeedEntry) => void;
+    onEntryShare?: (entry: FeedEntry) => void;
     onRefresh?: () => void;
 };
 
@@ -27,6 +28,7 @@ export function FeedList({
     empty,
     refreshing = false,
     onEntryPress,
+    onEntryShare,
     onRefresh,
 }: FeedListProps) {
     const entries = createEntries(feeds);
@@ -35,7 +37,13 @@ export function FeedList({
         <FlatList
             data={entries}
             keyExtractor={(entry) => entry.id}
-            renderItem={(info) => <FeedCard info={info} onEntryPress={onEntryPress} />}
+            renderItem={(info) => (
+                <FeedCard
+                    info={info}
+                    onEntryPress={onEntryPress}
+                    onEntryShare={onEntryShare}
+                />
+            )}
             ListHeaderComponent={header ?? null}
             ListEmptyComponent={empty ?? null}
             contentContainerStyle={[styles.content, entries.length === 0 ? styles.emptyContent : null]}
@@ -50,15 +58,22 @@ export function FeedList({
 function FeedCard({
     info,
     onEntryPress,
+    onEntryShare,
 }: {
     info: ListRenderItemInfo<FeedEntry>;
     onEntryPress?: (entry: FeedEntry) => void;
+    onEntryShare?: (entry: FeedEntry) => void;
 }) {
     return (
         <RssItemCard
             item={info.item.item}
             sourceTitle={info.item.sourceTitle}
             onPress={onEntryPress ? () => onEntryPress(info.item) : undefined}
+            onShare={
+                onEntryShare && info.item.item.link
+                    ? () => onEntryShare(info.item)
+                    : undefined
+            }
         />
     );
 }

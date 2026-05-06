@@ -1,15 +1,15 @@
 import { StyleSheet } from "react-native";
 import { theme } from "../../styles/theme";
 
-const VISUAL_SIZE = 67;
-const METADATA_TEXT_SIZE = 10;
-const METADATA_LINE_HEIGHT = 14;
-const TITLE_TEXT_SIZE = 14;
-const TITLE_LINE_HEIGHT = 17;
-const SUMMARY_TEXT_SIZE = 12;
-const SUMMARY_LINE_HEIGHT = 16;
-const TITLE_TOP_GAP = 1;
-const SUMMARY_TOP_GAP = 2;
+export const MIN_VISUAL_SIZE = 67;
+export const METADATA_TEXT_SIZE = 10;
+export const METADATA_LINE_HEIGHT = 14;
+export const TITLE_TEXT_SIZE = 14;
+export const TITLE_LINE_HEIGHT = 17;
+export const SUMMARY_TEXT_SIZE = 12;
+export const SUMMARY_LINE_HEIGHT = 16;
+export const TITLE_TOP_GAP = 1;
+export const SUMMARY_TOP_GAP = 2;
 
 export const styles = StyleSheet.create({
     card: {
@@ -26,12 +26,12 @@ export const styles = StyleSheet.create({
     },
     row: {
         flexDirection: "row",
-        alignItems: "stretch",
-        minHeight: VISUAL_SIZE,
+        alignItems: "flex-start",
+        minHeight: MIN_VISUAL_SIZE,
     },
     content: {
         flex: 1,
-        minHeight: VISUAL_SIZE,
+        minHeight: MIN_VISUAL_SIZE,
         paddingLeft: theme.spacing.sm,
     },
     title: {
@@ -42,6 +42,12 @@ export const styles = StyleSheet.create({
         fontWeight: theme.fontWeights.semibold,
     },
     metadataRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    metadataText: {
+        flex: 1,
+        minWidth: 0,
         flexDirection: "row",
         alignItems: "center",
     },
@@ -60,6 +66,21 @@ export const styles = StyleSheet.create({
         lineHeight: METADATA_LINE_HEIGHT,
         fontWeight: theme.fontWeights.medium,
     },
+    shareButton: {
+        marginLeft: theme.spacing.xs,
+        paddingHorizontal: theme.spacing.xs,
+        paddingVertical: 1,
+        borderRadius: theme.radii.sm,
+    },
+    shareButtonPressed: {
+        opacity: 0.5,
+    },
+    shareButtonText: {
+        color: theme.colors.text,
+        fontSize: METADATA_TEXT_SIZE,
+        lineHeight: METADATA_LINE_HEIGHT,
+        fontWeight: theme.fontWeights.medium,
+    },
     summary: {
         marginTop: SUMMARY_TOP_GAP,
         color: theme.colors.textMuted,
@@ -67,8 +88,8 @@ export const styles = StyleSheet.create({
         lineHeight: SUMMARY_LINE_HEIGHT,
     },
     visual: {
-        width: VISUAL_SIZE,
-        height: VISUAL_SIZE,
+        width: MIN_VISUAL_SIZE,
+        height: MIN_VISUAL_SIZE,
     },
     image: {
         width: "100%",

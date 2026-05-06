@@ -1,4 +1,4 @@
-import { Linking, Text, View } from "react-native";
+import { Linking, Share, Text, View } from "react-native";
 import { EmptyList } from "../../components/EmptyList/EmptyList";
 import { FeedList } from "../../components/FeedList/FeedList";
 import { useRssData } from "../../features/rss/RssDataProvider";
@@ -41,6 +41,21 @@ export default function FeedScreen() {
                     if (entry.item.link) {
                         void Linking.openURL(entry.item.link);
                     }
+                }}
+                onEntryShare={(entry) => {
+                    const link = entry.item.link;
+
+                    if (!link) {
+                        return;
+                    }
+
+                    void Share.share({
+                        title: entry.item.title,
+                        message: link,
+                        url: link,
+                    }).catch(() => {
+                        void Linking.openURL(link);
+                    });
                 }}
             />
         </View>
