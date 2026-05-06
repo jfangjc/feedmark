@@ -1,12 +1,21 @@
 import { StyleSheet } from "react-native";
 import { theme } from "../../styles/theme";
 
-const VISUAL_SIZE = 96;
+const VISUAL_SIZE = 67;
+const METADATA_TEXT_SIZE = 10;
+const METADATA_LINE_HEIGHT = 14;
+const TITLE_TEXT_SIZE = 14;
+const TITLE_LINE_HEIGHT = 17;
+const SUMMARY_TEXT_SIZE = 12;
+const SUMMARY_LINE_HEIGHT = 16;
+const TITLE_TOP_GAP = 1;
+const SUMMARY_TOP_GAP = 2;
 
 export const styles = StyleSheet.create({
     card: {
         marginBottom: theme.spacing.md,
-        padding: theme.spacing.lg,
+        paddingHorizontal: theme.spacing.sm,
+        paddingVertical: theme.spacing.sm,
         borderWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors.border,
         borderRadius: theme.radii.md,
@@ -23,27 +32,39 @@ export const styles = StyleSheet.create({
     content: {
         flex: 1,
         minHeight: VISUAL_SIZE,
-        paddingLeft: theme.spacing.md,
+        paddingLeft: theme.spacing.sm,
     },
     title: {
-        marginTop: theme.spacing.xs,
+        marginTop: TITLE_TOP_GAP,
         color: theme.colors.text,
-        fontSize: theme.fontSizes.lg,
-        lineHeight: theme.lineHeights.lg,
+        fontSize: TITLE_TEXT_SIZE,
+        lineHeight: TITLE_LINE_HEIGHT,
         fontWeight: theme.fontWeights.semibold,
     },
+    metadataRow: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    sourceMetadata: {
+        flexShrink: 1,
+        marginRight: theme.spacing.xs,
+        color: theme.colors.text,
+        fontSize: METADATA_TEXT_SIZE,
+        lineHeight: METADATA_LINE_HEIGHT,
+        fontWeight: theme.fontWeights.medium,
+    },
     metadata: {
-        flex: 1,
+        flexShrink: 0,
         color: theme.colors.textMuted,
-        fontSize: theme.fontSizes.xs,
-        lineHeight: theme.lineHeights.sm,
+        fontSize: METADATA_TEXT_SIZE,
+        lineHeight: METADATA_LINE_HEIGHT,
         fontWeight: theme.fontWeights.medium,
     },
     summary: {
-        marginTop: theme.spacing.sm,
+        marginTop: SUMMARY_TOP_GAP,
         color: theme.colors.textMuted,
-        fontSize: theme.fontSizes.sm,
-        lineHeight: theme.lineHeights.sm,
+        fontSize: SUMMARY_TEXT_SIZE,
+        lineHeight: SUMMARY_LINE_HEIGHT,
     },
     visual: {
         width: VISUAL_SIZE,
@@ -73,33 +94,17 @@ export const styles = StyleSheet.create({
         shadowRadius: 16,
         elevation: 2,
     },
-    sourcePill: {
-        position: "absolute",
-        top: theme.spacing.xs,
-        left: theme.spacing.xs,
-        right: theme.spacing.xs,
-        paddingHorizontal: theme.spacing.sm,
-        paddingVertical: 2,
-        borderRadius: theme.radii.sm,
-        backgroundColor: "rgba(20,20,20,0.62)",
-    },
-    sourceText: {
-        color: theme.colors.surface,
-        fontSize: theme.fontSizes.xs,
-        lineHeight: theme.lineHeights.sm,
-        fontWeight: theme.fontWeights.bold,
-    },
     previewTitle: {
-        marginTop: theme.spacing.xl,
+        marginTop: theme.spacing.md,
         color: theme.colors.text,
-        fontSize: theme.fontSizes.xs,
-        lineHeight: theme.lineHeights.sm,
+        fontSize: METADATA_TEXT_SIZE,
+        lineHeight: METADATA_LINE_HEIGHT,
         fontWeight: theme.fontWeights.semibold,
     },
     previewAction: {
         color: theme.colors.textMuted,
-        fontSize: theme.fontSizes.xs,
-        lineHeight: theme.lineHeights.sm,
+        fontSize: METADATA_TEXT_SIZE,
+        lineHeight: METADATA_LINE_HEIGHT,
         fontWeight: theme.fontWeights.medium,
     },
 });

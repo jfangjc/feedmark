@@ -3,7 +3,7 @@ import { theme } from "../../styles/theme";
 
 export const styles = StyleSheet.create({
     content: {
-        padding: theme.spacing.xl,
+        padding: theme.spacing.md,
         paddingTop: theme.spacing.xxxl,
         paddingBottom: theme.spacing.xl,
     },

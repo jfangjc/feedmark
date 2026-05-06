@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
 import type { RssFeedItem } from "../../features/rss/types";
 import { getHostnameLabel } from "../../utils/url";
@@ -12,6 +13,14 @@ type RssItemCardProps = {
 export function RssItemCard({ item, sourceTitle, onPress }: RssItemCardProps) {
     const publishedDate = formatPublishedDate(item.publishedAt);
     const summary = getFirstLine(item.summary);
+    const sourceLabel = sourceTitle ?? (item.link ? getHostnameLabel(item.link) : undefined);
+    const hasMetadata = Boolean(sourceLabel || publishedDate);
+    const [titleLineCount, setTitleLineCount] = useState(1);
+    const summaryLineCount = titleLineCount <= 1 ? 2 : 1;
+
+    useEffect(() => {
+        setTitleLineCount(1);
+    }, [item.id]);
 
     return (
         <Pressable
@@ -20,18 +29,39 @@ export function RssItemCard({ item, sourceTitle, onPress }: RssItemCardProps) {
             style={({ pressed }) => [styles.card, pressed ? styles.cardPressed : null]}
         >
             <View style={styles.row}>
-                <ArticleVisual item={item} sourceTitle={sourceTitle} />
+                <ArticleVisual item={item} />
                 <View style={styles.content}>
-                    {publishedDate ? (
-                        <Text numberOfLines={1} style={styles.metadata}>
-                            {publishedDate}
-                        </Text>
+                    {hasMetadata ? (
+                        <View style={styles.metadataRow}>
+                            {sourceLabel ? (
+                                <Text numberOfLines={1} style={styles.sourceMetadata}>
+                                    {sourceLabel}
+                                </Text>
+                            ) : null}
+                            {publishedDate ? (
+                                <Text numberOfLines={1} style={styles.metadata}>
+                                    {publishedDate}
+                                </Text>
+                            ) : null}
+                        </View>
                     ) : null}
-                    <Text numberOfLines={3} style={styles.title}>
+                    <Text
+                        numberOfLines={2}
+                        onTextLayout={(event) => {
+                            const nextTitleLineCount = Math.min(event.nativeEvent.lines.length, 2);
+
+                            setTitleLineCount((currentTitleLineCount) =>
+                                currentTitleLineCount === nextTitleLineCount
+                                    ? currentTitleLineCount
+                                    : nextTitleLineCount,
+                            );
+                        }}
+                        style={styles.title}
+                    >
                         {item.title}
                     </Text>
                     {summary ? (
-                        <Text numberOfLines={1} style={styles.summary}>
+                        <Text numberOfLines={summaryLineCount} style={styles.summary}>
                             {summary}
                         </Text>
                     ) : null}
@@ -41,9 +71,8 @@ export function RssItemCard({ item, sourceTitle, onPress }: RssItemCardProps) {
     );
 }
 
-function ArticleVisual({ item, sourceTitle }: { item: RssFeedItem; sourceTitle?: string }) {
+function ArticleVisual({ item }: { item: RssFeedItem }) {
     const host = item.link ? getHostnameLabel(item.link) : "Preview";
-    const sourceLabel = sourceTitle ?? host;
 
     if (item.imageUrl) {
         return (
@@ -53,7 +82,6 @@ function ArticleVisual({ item, sourceTitle }: { item: RssFeedItem; sourceTitle?:
                     source={{ uri: item.imageUrl }}
                     style={styles.image}
                 />
-                <SourcePill label={sourceLabel} />
             </View>
         );
     }
@@ -68,17 +96,6 @@ function ArticleVisual({ item, sourceTitle }: { item: RssFeedItem; sourceTitle?:
                     Open link
                 </Text>
             </View>
-            <SourcePill label={sourceLabel} />
-        </View>
-    );
-}
-
-function SourcePill({ label }: { label: string }) {
-    return (
-        <View style={styles.sourcePill}>
-            <Text numberOfLines={1} style={styles.sourceText}>
-                {label}
-            </Text>
         </View>
     );
 }

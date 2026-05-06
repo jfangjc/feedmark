@@ -1,28 +1,19 @@
 import { FlatList, RefreshControl, type ListRenderItemInfo } from "react-native";
 import type { ReactElement } from "react";
 import type { RssFeed, RssFeedItem } from "../../features/rss/types";
-import type { FeedSubscription } from "../../features/subscriptions/types";
 import { RssItemCard } from "../RssItemCard/RssItemCard";
-import { SubscriptionCard } from "../SubscriptionCard/SubscriptionCard";
 import { styles } from "./FeedList.styles";
 
-export type FeedEntry =
-    | {
-        id: string;
-        type: "rssItem";
-        sourceId: string;
-        sourceTitle: string;
-        item: RssFeedItem;
-    }
-    | {
-        id: string;
-        type: "subscription";
-        subscription: FeedSubscription;
-    };
+export type FeedEntry = {
+    id: string;
+    type: "rssItem";
+    sourceId: string;
+    sourceTitle: string;
+    item: RssFeedItem;
+};
 
 type FeedListProps = {
     feeds: RssFeed[];
-    subscriptions: FeedSubscription[];
     header?: ReactElement;
     empty?: ReactElement;
     refreshing?: boolean;
@@ -32,14 +23,13 @@ type FeedListProps = {
 
 export function FeedList({
     feeds,
-    subscriptions,
     header,
     empty,
     refreshing = false,
     onEntryPress,
     onRefresh,
 }: FeedListProps) {
-    const entries = createEntries(feeds, subscriptions);
+    const entries = createEntries(feeds);
 
     return (
         <FlatList
@@ -64,15 +54,6 @@ function FeedCard({
     info: ListRenderItemInfo<FeedEntry>;
     onEntryPress?: (entry: FeedEntry) => void;
 }) {
-    if (info.item.type === "subscription") {
-        return (
-            <SubscriptionCard
-                subscription={info.item.subscription}
-                onPress={onEntryPress ? () => onEntryPress(info.item) : undefined}
-            />
-        );
-    }
-
     return (
         <RssItemCard
             item={info.item.item}
@@ -82,8 +63,8 @@ function FeedCard({
     );
 }
 
-function createEntries(feeds: RssFeed[], subscriptions: FeedSubscription[]): FeedEntry[] {
-    const rssEntries = feeds.flatMap((feed) =>
+function createEntries(feeds: RssFeed[]): FeedEntry[] {
+    return feeds.flatMap((feed) =>
         feed.items.map((item) => ({
             id: `rss:${feed.id}:${item.id}`,
             type: "rssItem" as const,
@@ -91,21 +72,13 @@ function createEntries(feeds: RssFeed[], subscriptions: FeedSubscription[]): Fee
             sourceTitle: feed.title,
             item,
         })),
-    );
-
-    const subscriptionEntries = subscriptions.map((subscription) => ({
-        id: `subscription:${subscription.id}`,
-        type: "subscription" as const,
-        subscription,
-    }));
-
-    return [...rssEntries, ...subscriptionEntries].sort(
+    ).sort(
         (firstEntry, secondEntry) => getTime(secondEntry) - getTime(firstEntry),
     );
 }
 
 function getTime(entry: FeedEntry): number {
-    const value = entry.type === "rssItem" ? entry.item.publishedAt : entry.subscription.updatedAt;
+    const value = entry.item.publishedAt;
 
     if (!value) {
         return 0;

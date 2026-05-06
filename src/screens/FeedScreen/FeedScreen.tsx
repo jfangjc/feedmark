@@ -7,7 +7,6 @@ import { styles } from "./FeedScreen.styles";
 export default function FeedScreen() {
     const {
         feeds,
-        subscriptions,
         isLoading,
         isRefreshing,
         statusMessage,
@@ -18,7 +17,6 @@ export default function FeedScreen() {
         <View style={styles.screen}>
             <FeedList
                 feeds={feeds}
-                subscriptions={subscriptions}
                 refreshing={isRefreshing}
                 onRefresh={() => {
                     void refreshFeeds();
@@ -40,13 +38,8 @@ export default function FeedScreen() {
                     />
                 }
                 onEntryPress={(entry) => {
-                    if (entry.type === "rssItem" && entry.item.link) {
+                    if (entry.item.link) {
                         void Linking.openURL(entry.item.link);
-                        return;
-                    }
-
-                    if (entry.type === "subscription") {
-                        void Linking.openURL(entry.subscription.siteUrl ?? entry.subscription.feedUrl);
                     }
                 }}
             />
