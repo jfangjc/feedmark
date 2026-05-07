@@ -15,6 +15,7 @@ import {
     removeCachedRssFeed,
     replaceCachedRssFeeds,
     saveCachedRssFeed,
+    saveCachedRssFeeds,
 } from "./storage";
 import type { RssFeed } from "./types";
 import { createFeedSubscription } from "../subscriptions/createFeedSubscription";
@@ -54,7 +55,16 @@ export function RssDataProvider({ children }: PropsWithChildren) {
     const mountedRef = useRef(true);
     const refreshIdRef = useRef(0);
 
+    const cancelActiveRefresh = useCallback(() => {
+        refreshIdRef.current += 1;
+        setIsRefreshing(false);
+    }, []);
+
     const refreshFeedSet = useCallback(async (nextSubscriptions: FeedSubscription[]) => {
+        const refreshId = refreshIdRef.current + 1;
+
+        refreshIdRef.current = refreshId;
+
         if (nextSubscriptions.length === 0) {
             setFeeds([]);
             setStatusMessage(undefined);
@@ -62,12 +72,23 @@ export function RssDataProvider({ children }: PropsWithChildren) {
             return;
         }
 
-        const refreshId = refreshIdRef.current + 1;
-        refreshIdRef.current = refreshId;
         setIsRefreshing(true);
 
         try {
             const result = await refreshRssFeeds(nextSubscriptions);
+
+            if (!mountedRef.current || refreshId !== refreshIdRef.current) {
+                return;
+            }
+
+            if (result.cacheUpdates.length > 0) {
+                try {
+                    await saveCachedRssFeeds(result.cacheUpdates);
+                }
+                catch {
+                    // The refreshed in-memory feed should still update if persistence is temporarily unavailable.
+                }
+            }
 
             if (!mountedRef.current || refreshId !== refreshIdRef.current) {
                 return;
@@ -126,6 +147,7 @@ export function RssDataProvider({ children }: PropsWithChildren) {
     }, [refreshFeedSet]);
 
     const addRssSubscription = useCallback(async (feedUrl: string) => {
+        cancelActiveRefresh();
         setStatusMessage(undefined);
 
         const subscription = createFeedSubscription({ feedUrl });
@@ -143,9 +165,10 @@ export function RssDataProvider({ children }: PropsWithChildren) {
 
         setSubscriptions((currentSubscriptions) => upsertSubscription(currentSubscriptions, savedSubscription));
         setFeeds((currentFeeds) => upsertFeed(currentFeeds, feed));
-    }, []);
+    }, [cancelActiveRefresh]);
 
     const removeRssSubscription = useCallback(async (id: string) => {
+        cancelActiveRefresh();
         const subscription = subscriptions.find((candidate) => candidate.id === id);
 
         await removeFeedSubscription(id);
@@ -162,23 +185,25 @@ export function RssDataProvider({ children }: PropsWithChildren) {
                 ? currentFeeds.filter((feed) => feed.feedUrl !== subscription.feedUrl)
                 : currentFeeds,
         );
-    }, [subscriptions]);
+    }, [cancelActiveRefresh, subscriptions]);
 
     const refreshFeeds = useCallback(async () => {
         await refreshFeedSet(subscriptions);
     }, [refreshFeedSet, subscriptions]);
 
     const clearSubscriptions = useCallback(async () => {
+        cancelActiveRefresh();
         await clearFeedSubscriptions();
         await replaceCachedRssFeeds([]);
         setSubscriptions([]);
         setFeeds([]);
         setStatusMessage(undefined);
-    }, []);
+    }, [cancelActiveRefresh]);
 
     const exportSubscriptionsJson = useCallback(() => exportFeedSubscriptionsJson(subscriptions), [subscriptions]);
 
     const importSubscriptionsJson = useCallback(async (json: string) => {
+        cancelActiveRefresh();
         const importedSubscriptions = parseFeedSubscriptionsJson(json);
 
         await replaceFeedSubscriptions(importedSubscriptions);
@@ -187,7 +212,7 @@ export function RssDataProvider({ children }: PropsWithChildren) {
         const cachedFeeds = await listCachedRssFeeds();
         setFeeds(filterFeedsForSubscriptions(cachedFeeds, importedSubscriptions));
         await refreshFeedSet(importedSubscriptions);
-    }, [refreshFeedSet]);
+    }, [cancelActiveRefresh, refreshFeedSet]);
 
     const value = useMemo<RssDataContextValue>(
         () => ({

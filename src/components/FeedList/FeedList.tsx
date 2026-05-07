@@ -1,5 +1,5 @@
-import { FlatList, RefreshControl, type ListRenderItemInfo } from "react-native";
-import type { ReactElement } from "react";
+import { FlatList, Platform, RefreshControl, type ListRenderItemInfo } from "react-native";
+import { useCallback, useMemo, type ReactElement } from "react";
 import type { RssFeed, RssFeedItem } from "../../features/rss/types";
 import { RssItemCard } from "../RssItemCard/RssItemCard";
 import { styles } from "./FeedList.styles";
@@ -31,19 +31,20 @@ export function FeedList({
     onEntryShare,
     onRefresh,
 }: FeedListProps) {
-    const entries = createEntries(feeds);
+    const entries = useMemo(() => createEntries(feeds), [feeds]);
+    const renderItem = useCallback((info: ListRenderItemInfo<FeedEntry>) => (
+        <FeedCard
+            info={info}
+            onEntryPress={onEntryPress}
+            onEntryShare={onEntryShare}
+        />
+    ), [onEntryPress, onEntryShare]);
 
     return (
         <FlatList
             data={entries}
             keyExtractor={(entry) => entry.id}
-            renderItem={(info) => (
-                <FeedCard
-                    info={info}
-                    onEntryPress={onEntryPress}
-                    onEntryShare={onEntryShare}
-                />
-            )}
+            renderItem={renderItem}
             ListHeaderComponent={header ?? null}
             ListEmptyComponent={empty ?? null}
             contentContainerStyle={[styles.content, entries.length === 0 ? styles.emptyContent : null]}
@@ -51,6 +52,10 @@ export function FeedList({
                 onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
             }
             alwaysBounceVertical={Boolean(onRefresh)}
+            initialNumToRender={8}
+            maxToRenderPerBatch={8}
+            removeClippedSubviews={Platform.OS === "android"}
+            windowSize={7}
             showsHorizontalScrollIndicator={false}
             showsVerticalScrollIndicator={false}
         />

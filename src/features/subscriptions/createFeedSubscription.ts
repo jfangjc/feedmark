@@ -5,7 +5,7 @@ import type { CreateFeedSubscriptionInput, FeedSubscription } from "./types";
 export function createFeedSubscription(input: CreateFeedSubscriptionInput): FeedSubscription {
     const feedUrl = normalizeFeedUrl(input.feedUrl);
     const title = input.title?.trim() || getHostnameLabel(feedUrl) || "RSS feed";
-    const now = (input.now ?? new Date()).toISOString();
+    const now = toIsoDate(input.now ?? new Date());
 
     return {
         id: createStableId("rss_subscription", feedUrl),
@@ -16,4 +16,8 @@ export function createFeedSubscription(input: CreateFeedSubscriptionInput): Feed
         createdAt: now,
         updatedAt: now,
     };
+}
+
+function toIsoDate(date: Date): string {
+    return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Image, Pressable, Text, useWindowDimensions, View } from "react-native";
 import type { RssFeedItem } from "../../features/rss/types";
 import { getHostnameLabel } from "../../utils/url";
@@ -28,18 +28,21 @@ export function RssItemCard({ item, sourceTitle, onPress, onShare }: RssItemCard
     const summary = getFirstLine(item.summary);
     const sourceLabel = sourceTitle ?? (item.link ? getHostnameLabel(item.link) : undefined);
     const hasMetadata = Boolean(sourceLabel || publishedDate || onShare);
-    const [titleLineCount, setTitleLineCount] = useState(1);
-    const summaryLineCount = titleLineCount <= 1 ? 2 : 1;
+    const [titleLineState, setTitleLineState] = useState<{
+        itemId: string;
+        lineCount: 1 | 2;
+    }>({
+        itemId: item.id,
+        lineCount: 1,
+    });
+    const titleLineCount = titleLineState.itemId === item.id ? titleLineState.lineCount : 1;
+    const summaryLineCount = getSummaryLineCount(titleLineCount);
     const textStyles = useMemo(() => getScaledTextStyles(fontScale), [fontScale]);
     const visualSize = getVisualSize({
         fontScale,
         hasMetadata,
         hasSummary: Boolean(summary),
     });
-
-    useEffect(() => {
-        setTitleLineCount(1);
-    }, [item.id]);
 
     return (
         <Pressable
@@ -99,13 +102,20 @@ export function RssItemCard({ item, sourceTitle, onPress, onShare }: RssItemCard
                     <Text
                         allowFontScaling={false}
                         numberOfLines={2}
-                        onTextLayout={(event) => {
-                            const nextTitleLineCount = Math.min(event.nativeEvent.lines.length, 2);
+                        onLayout={(event) => {
+                            const nextTitleLineCount = getTitleLineCountFromHeight(
+                                event.nativeEvent.layout.height,
+                                textStyles.title.lineHeight,
+                            );
 
-                            setTitleLineCount((currentTitleLineCount) =>
-                                currentTitleLineCount === nextTitleLineCount
-                                    ? currentTitleLineCount
-                                    : nextTitleLineCount,
+                            setTitleLineState((currentTitleLineState) =>
+                                currentTitleLineState.itemId === item.id &&
+                                    currentTitleLineState.lineCount === nextTitleLineCount
+                                    ? currentTitleLineState
+                                    : {
+                                        itemId: item.id,
+                                        lineCount: nextTitleLineCount,
+                                    },
                             );
                         }}
                         style={[styles.title, textStyles.title]}
@@ -210,6 +220,14 @@ function getScaledTextStyles(fontScale: number) {
             lineHeight: SUMMARY_LINE_HEIGHT * fontScale,
         },
     };
+}
+
+function getSummaryLineCount(titleLineCount: 1 | 2): 1 | 2 {
+    return titleLineCount === 1 ? 2 : 1;
+}
+
+function getTitleLineCountFromHeight(height: number, lineHeight: number): 1 | 2 {
+    return height > lineHeight * 1.5 ? 2 : 1;
 }
 
 function getFirstLine(value: string | undefined): string | undefined {

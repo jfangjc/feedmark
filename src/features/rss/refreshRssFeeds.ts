@@ -1,11 +1,15 @@
+import { mapWithConcurrency } from "../../utils/async";
 import { normalizeFeedUrl } from "../../utils/url";
 import type { FeedSubscription } from "../subscriptions/types";
 import { fetchRssFeed } from "./fetchRssFeed";
-import { listCachedRssFeeds, saveCachedRssFeed } from "./storage";
+import { listCachedRssFeeds } from "./storage";
 import type { RssFeed } from "./types";
+
+const MAX_CONCURRENT_FEED_FETCHES = 4;
 
 export type RefreshRssFeedsResult = {
     feeds: RssFeed[];
+    cacheUpdates: RssFeed[];
     failures: Array<{
         feedUrl: string;
         message: string;
@@ -15,12 +19,15 @@ export type RefreshRssFeedsResult = {
 export async function refreshRssFeeds(subscriptions: FeedSubscription[]): Promise<RefreshRssFeedsResult> {
     const cachedFeeds = await listCachedRssFeeds();
     const cachedFeedsByUrl = new Map(cachedFeeds.map((feed) => [feed.feedUrl, feed]));
-    const results = await Promise.all(
-        subscriptions.map(async (subscription) => refreshSubscription(subscription, cachedFeedsByUrl)),
+    const results = await mapWithConcurrency(
+        subscriptions,
+        MAX_CONCURRENT_FEED_FETCHES,
+        async (subscription) => refreshSubscription(subscription, cachedFeedsByUrl),
     );
 
     return {
         feeds: results.flatMap((result) => (result.feed ? [result.feed] : [])),
+        cacheUpdates: results.flatMap((result) => (result.feedToCache ? [result.feedToCache] : [])),
         failures: results.flatMap((result) => (result.failure ? [result.failure] : [])),
     };
 }
@@ -30,22 +37,26 @@ async function refreshSubscription(
     cachedFeedsByUrl: Map<string, RssFeed>,
 ): Promise<{
     feed?: RssFeed;
+    feedToCache?: RssFeed;
     failure?: {
         feedUrl: string;
         message: string;
     };
 }> {
     const feedUrl = normalizeFeedUrl(subscription.feedUrl);
+    const cachedFeed = cachedFeedsByUrl.get(feedUrl);
 
     try {
-        const feed = await fetchRssFeed(feedUrl);
-        await saveCachedRssFeed(feed);
+        const feed = await fetchRssFeed(feedUrl, { cachedFeed });
 
-        return { feed };
+        return {
+            feed,
+            feedToCache: feed,
+        };
     }
     catch (error) {
         return {
-            feed: cachedFeedsByUrl.get(feedUrl),
+            feed: cachedFeed,
             failure: {
                 feedUrl,
                 message: getErrorMessage(error),

@@ -47,7 +47,12 @@ async function readStringValue(key: string): Promise<string | undefined> {
     const webStorage = getWebStorage();
 
     if (webStorage) {
-        return webStorage.getItem(key) ?? undefined;
+        try {
+            return webStorage.getItem(key) ?? undefined;
+        }
+        catch {
+            return MEMORY_STORE.get(key);
+        }
     }
 
     const fileUri = getNativeFileUri(key);
@@ -76,7 +81,13 @@ async function writeStringValue(key: string, value: string): Promise<void> {
     const webStorage = getWebStorage();
 
     if (webStorage) {
-        webStorage.setItem(key, value);
+        try {
+            webStorage.setItem(key, value);
+        }
+        catch {
+            // The in-memory write above keeps the current session usable if web persistence is unavailable.
+        }
+
         return;
     }
 
@@ -96,11 +107,16 @@ async function writeStringValue(key: string, value: string): Promise<void> {
 }
 
 function getWebStorage(): Storage | undefined {
-    if (Platform.OS !== "web" || typeof globalThis.localStorage === "undefined") {
+    if (Platform.OS !== "web") {
         return undefined;
     }
 
-    return globalThis.localStorage;
+    try {
+        return globalThis.localStorage;
+    }
+    catch {
+        return undefined;
+    }
 }
 
 function getNativeFileUri(key: string): string | undefined {

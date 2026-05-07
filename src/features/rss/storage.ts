@@ -10,30 +10,69 @@ type StoredRssFeeds = {
     feeds: RssFeed[];
 };
 
+let cacheWriteQueue: Promise<void> = Promise.resolve();
+
 export async function listCachedRssFeeds(): Promise<RssFeed[]> {
+    await waitForCacheWrites();
+
+    return await readCachedFeeds();
+}
+
+export async function saveCachedRssFeed(feed: RssFeed): Promise<void> {
+    await saveCachedRssFeeds([feed]);
+}
+
+export async function saveCachedRssFeeds(feedsToSave: RssFeed[]): Promise<void> {
+    await enqueueCacheWrite(async () => {
+        const feeds = await readCachedFeeds();
+        const nextFeedsByUrl = new Map(feeds.map((cachedFeed) => [cachedFeed.feedUrl, cachedFeed]));
+
+        for (const feed of feedsToSave) {
+            const trimmedFeed = trimFeed(feed);
+
+            nextFeedsByUrl.set(trimmedFeed.feedUrl, trimmedFeed);
+        }
+
+        await writeFeeds(Array.from(nextFeedsByUrl.values()));
+    });
+}
+
+export async function removeCachedRssFeed(feedUrl: string): Promise<void> {
+    await enqueueCacheWrite(async () => {
+        const normalizedFeedUrl = normalizeFeedUrl(feedUrl);
+        const feeds = await readCachedFeeds();
+
+        await writeFeeds(feeds.filter((feed) => feed.feedUrl !== normalizedFeedUrl));
+    });
+}
+
+export async function replaceCachedRssFeeds(feeds: RssFeed[]): Promise<void> {
+    await enqueueCacheWrite(async () => {
+        await writeFeeds(feeds);
+    });
+}
+
+async function readCachedFeeds(): Promise<RssFeed[]> {
     const storedValue = await readJsonValue<StoredRssFeeds>(STORAGE_KEY, createEmptyStore());
 
     return normalizeFeeds(storedValue.feeds);
 }
 
-export async function saveCachedRssFeed(feed: RssFeed): Promise<void> {
-    const feeds = await listCachedRssFeeds();
-    const nextFeeds = feeds.filter((cachedFeed) => cachedFeed.feedUrl !== feed.feedUrl);
+async function enqueueCacheWrite(write: () => Promise<void>): Promise<void> {
+    const writeOperation = cacheWriteQueue.then(write, write);
 
-    nextFeeds.push(trimFeed(feed));
+    cacheWriteQueue = writeOperation.catch(() => undefined);
 
-    await writeFeeds(nextFeeds);
+    return await writeOperation;
 }
 
-export async function removeCachedRssFeed(feedUrl: string): Promise<void> {
-    const normalizedFeedUrl = normalizeFeedUrl(feedUrl);
-    const feeds = await listCachedRssFeeds();
-
-    await writeFeeds(feeds.filter((feed) => feed.feedUrl !== normalizedFeedUrl));
-}
-
-export async function replaceCachedRssFeeds(feeds: RssFeed[]): Promise<void> {
-    await writeFeeds(feeds);
+async function waitForCacheWrites(): Promise<void> {
+    try {
+        await cacheWriteQueue;
+    }
+    catch {
+        // Failed writes are surfaced to their caller; later reads should still be allowed to continue.
+    }
 }
 
 async function writeFeeds(feeds: RssFeed[]): Promise<void> {
@@ -58,7 +97,14 @@ function normalizeFeeds(feeds: RssFeed[] | undefined): RssFeed[] {
             continue;
         }
 
-        byUrl.set(feed.feedUrl, trimFeed(feed));
+        try {
+            const trimmedFeed = trimFeed(feed);
+
+            byUrl.set(trimmedFeed.feedUrl, trimmedFeed);
+        }
+        catch {
+            // Ignore malformed cache entries so one bad feed does not invalidate the whole cache.
+        }
     }
 
     return Array.from(byUrl.values()).sort((firstFeed, secondFeed) => getFeedTime(secondFeed) - getFeedTime(firstFeed));
@@ -67,6 +113,7 @@ function normalizeFeeds(feeds: RssFeed[] | undefined): RssFeed[] {
 function trimFeed(feed: RssFeed): RssFeed {
     return {
         ...feed,
+        feedUrl: normalizeFeedUrl(feed.feedUrl),
         items: normalizeItems(feed.items).slice(0, MAX_CACHED_ITEMS_PER_FEED),
     };
 }

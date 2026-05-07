@@ -9,31 +9,41 @@ type StoredFeedSubscriptions = {
     subscriptions: FeedSubscription[];
 };
 
-export async function listFeedSubscriptions(): Promise<FeedSubscription[]> {
-    const storedValue = await readJsonValue<StoredFeedSubscriptions>(STORAGE_KEY, createEmptyStore());
+let subscriptionWriteQueue: Promise<void> = Promise.resolve();
 
-    return normalizeSubscriptions(storedValue.subscriptions);
+export async function listFeedSubscriptions(): Promise<FeedSubscription[]> {
+    await waitForSubscriptionWrites();
+
+    return await readSubscriptions();
 }
 
 export async function saveFeedSubscription(subscription: FeedSubscription): Promise<void> {
-    const subscriptions = await listFeedSubscriptions();
-    const nextSubscriptions = upsertSubscription(subscriptions, subscription);
+    await enqueueSubscriptionWrite(async () => {
+        const subscriptions = await readSubscriptions();
+        const nextSubscriptions = upsertSubscription(subscriptions, subscription);
 
-    await writeSubscriptions(nextSubscriptions);
+        await writeSubscriptions(nextSubscriptions);
+    });
 }
 
 export async function replaceFeedSubscriptions(subscriptions: FeedSubscription[]): Promise<void> {
-    await writeSubscriptions(subscriptions);
+    await enqueueSubscriptionWrite(async () => {
+        await writeSubscriptions(subscriptions);
+    });
 }
 
 export async function removeFeedSubscription(id: string): Promise<void> {
-    const subscriptions = await listFeedSubscriptions();
+    await enqueueSubscriptionWrite(async () => {
+        const subscriptions = await readSubscriptions();
 
-    await writeSubscriptions(subscriptions.filter((subscription) => subscription.id !== id));
+        await writeSubscriptions(subscriptions.filter((subscription) => subscription.id !== id));
+    });
 }
 
 export async function clearFeedSubscriptions(): Promise<void> {
-    await writeSubscriptions([]);
+    await enqueueSubscriptionWrite(async () => {
+        await writeSubscriptions([]);
+    });
 }
 
 export function exportFeedSubscriptionsJson(subscriptions: FeedSubscription[]): string {
@@ -54,6 +64,29 @@ export function parseFeedSubscriptionsJson(json: string): FeedSubscription[] {
     const parsedValue = JSON.parse(json) as unknown;
 
     return normalizeImportedSubscriptions(parsedValue);
+}
+
+async function readSubscriptions(): Promise<FeedSubscription[]> {
+    const storedValue = await readJsonValue<StoredFeedSubscriptions>(STORAGE_KEY, createEmptyStore());
+
+    return normalizeSubscriptions(storedValue.subscriptions);
+}
+
+async function enqueueSubscriptionWrite(write: () => Promise<void>): Promise<void> {
+    const writeOperation = subscriptionWriteQueue.then(write, write);
+
+    subscriptionWriteQueue = writeOperation.catch(() => undefined);
+
+    return await writeOperation;
+}
+
+async function waitForSubscriptionWrites(): Promise<void> {
+    try {
+        await subscriptionWriteQueue;
+    }
+    catch {
+        // Failed writes are surfaced to their caller; later reads should still be allowed to continue.
+    }
 }
 
 async function writeSubscriptions(subscriptions: FeedSubscription[]): Promise<void> {

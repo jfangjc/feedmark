@@ -15,6 +15,8 @@ export type RssFeed = {
     siteUrl?: string;
     description?: string;
     imageUrl?: string;
+    httpEtag?: string;
+    httpLastModified?: string;
     lastFetchedAt?: string;
     items: RssFeedItem[];
 };
