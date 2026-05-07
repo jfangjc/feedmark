@@ -8,6 +8,10 @@ export const theme = {
         border: "#d9d9d2",
         accent: "#e2e2e2",
         accentSoft: "#757575",
+        glassBorder: "rgba(255, 255, 255, 0.82)",
+        glassEdgeShade: "rgba(0, 0, 0, 0.08)",
+        glassEdgeSoftShade: "rgba(0, 0, 0, 0.04)",
+        glassShadow: "#000000",
     },
     spacing: {
         xs: 4,
@@ -41,5 +45,27 @@ export const theme = {
         medium: "500",
         semibold: "600",
         bold: "700",
+    },
+    shadows: {
+        glass: {
+            shadowColor: "#000000",
+            shadowOffset: {
+                width: 0,
+                height: 6,
+            },
+            shadowOpacity: 0.07,
+            shadowRadius: 14,
+            elevation: 1,
+        },
+        glassHover: {
+            shadowColor: "#000000",
+            shadowOffset: {
+                width: 0,
+                height: 8,
+            },
+            shadowOpacity: 0.1,
+            shadowRadius: 16,
+            elevation: 2,
+        },
     },
 } as const;

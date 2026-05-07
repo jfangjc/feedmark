@@ -31,7 +31,12 @@ export default function SettingScreen() {
     }
 
     return (
-        <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
+        <ScrollView
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            style={styles.screen}
+            contentContainerStyle={styles.content}
+        >
             <Text style={styles.title}>Setting</Text>
             <View style={styles.actions}>
                 <Pressable

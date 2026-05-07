@@ -41,6 +41,8 @@ export default function ManageScreen() {
     return (
         <ScrollView
             keyboardShouldPersistTaps="handled"
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
             style={styles.screen}
             contentContainerStyle={styles.content}
         >

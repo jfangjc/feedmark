@@ -16,10 +16,8 @@ export const styles = StyleSheet.create({
         marginBottom: theme.spacing.md,
         paddingHorizontal: theme.spacing.sm,
         paddingVertical: theme.spacing.sm,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: theme.colors.border,
         borderRadius: theme.radii.md,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: "transparent",
     },
     cardPressed: {
         opacity: 0.72,

@@ -51,6 +51,8 @@ export function FeedList({
                 onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
             }
             alwaysBounceVertical={Boolean(onRefresh)}
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
         />
     );
 }

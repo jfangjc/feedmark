@@ -1,0 +1,85 @@
+import { StyleSheet } from "react-native";
+import { theme } from "../../styles/theme";
+
+export const styles = StyleSheet.create({
+    material: {
+        ...StyleSheet.absoluteFillObject,
+        overflow: "hidden",
+        backgroundColor: "rgba(255, 255, 255, 0.14)",
+    },
+    materialPill: {
+        backgroundColor: "rgba(255, 255, 255, 0.52)",
+    },
+    blurredSource: {
+        position: "absolute",
+        top: -20,
+        right: -20,
+        bottom: -20,
+        left: -20,
+        opacity: 0.1,
+        transform: [{ scale: 1.22 }],
+    },
+    haze: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: "rgba(255, 255, 255, 0.08)",
+    },
+    refractedCenter: {
+        position: "absolute",
+        top: 3,
+        right: 3,
+        bottom: 3,
+        left: 3,
+        borderRadius: theme.radii.md,
+        backgroundColor: "transparent",
+    },
+    topHighlight: {
+        position: "absolute",
+        top: 0,
+        right: 10,
+        left: 10,
+        height: 1,
+        backgroundColor: "rgba(255, 255, 255, 0.92)",
+    },
+    leftHighlight: {
+        position: "absolute",
+        top: 6,
+        bottom: 10,
+        left: 0,
+        width: 1,
+        backgroundColor: "rgba(255, 255, 255, 0.5)",
+    },
+    rightShade: {
+        position: "absolute",
+        top: 7,
+        right: 0,
+        bottom: 8,
+        width: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.045)",
+    },
+    bottomShade: {
+        position: "absolute",
+        right: 8,
+        bottom: 0,
+        left: 8,
+        height: 1,
+        backgroundColor: "rgba(0, 0, 0, 0.07)",
+    },
+    innerEdge: {
+        ...StyleSheet.absoluteFillObject,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderTopColor: "rgba(255, 255, 255, 0.9)",
+        borderRightColor: "rgba(0, 0, 0, 0.035)",
+        borderBottomColor: "rgba(0, 0, 0, 0.07)",
+        borderLeftColor: "rgba(255, 255, 255, 0.42)",
+    },
+    specularSpot: {
+        position: "absolute",
+        top: 4,
+        left: 18,
+        width: 56,
+        height: 10,
+        borderRadius: 999,
+        backgroundColor: "rgba(255, 255, 255, 0.18)",
+        opacity: 0.6,
+    },
+});

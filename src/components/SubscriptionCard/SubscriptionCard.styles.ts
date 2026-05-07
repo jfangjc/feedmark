@@ -4,10 +4,8 @@ import { theme } from "../../styles/theme";
 export const styles = StyleSheet.create({
     card: {
         padding: theme.spacing.lg,
-        borderWidth: StyleSheet.hairlineWidth,
-        borderColor: theme.colors.border,
         borderRadius: theme.radii.md,
-        backgroundColor: theme.colors.surface,
+        backgroundColor: "transparent",
     },
     cardPressed: {
         opacity: 0.72,

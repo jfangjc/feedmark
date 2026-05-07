@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { NAV_BAR_SCROLL_CLEARANCE } from "../../navigation/layout";
 import { theme } from "../../styles/theme";
 
 export const styles = StyleSheet.create({
@@ -9,7 +10,7 @@ export const styles = StyleSheet.create({
     content: {
         padding: theme.spacing.xl,
         paddingTop: theme.spacing.xxxl,
-        paddingBottom: theme.spacing.xxl,
+        paddingBottom: NAV_BAR_SCROLL_CLEARANCE,
     },
     title: {
         color: theme.colors.text,
